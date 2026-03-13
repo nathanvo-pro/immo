@@ -211,7 +211,6 @@ INSERT INTO properties (title, description, price, location, address, lat, lng, 
   'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800&q=80',
   ARRAY['https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800&q=80', 'https://images.unsplash.com/photo-1542156822-6924d1a71aba?w=800&q=80'],
   true
-),
 (
   'Maison de Charme à Rénover - Molenbeek',
   'À deux pas du canal et du centre-ville, cette maison typiquement bruxelloise séduira les amateurs de projets de rénovation. Elle conserve de magnifiques cheminées d''époque et un petit jardin arrière.',
@@ -231,3 +230,56 @@ INSERT INTO properties (title, description, price, location, address, lat, lng, 
   ARRAY['https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=800&q=80', 'https://images.unsplash.com/photo-1512914890251-2f96a9b0bbe2?w=800&q=80'],
   true
 );
+
+-- 5. Fonctions de recherche scalables (Spatial Search)
+-- Cette fonction permet de calculer les distances directement dans la base de données (PostgreSQL).
+-- C'est beaucoup plus performant que de tout ramener côté serveur Node.js.
+CREATE OR REPLACE FUNCTION search_properties_near(
+  target_lat FLOAT8,
+  target_lng FLOAT8,
+  min_dist FLOAT8 DEFAULT 0,
+  max_dist FLOAT8 DEFAULT 3000,
+  p_type TEXT DEFAULT NULL,
+  p_max_price INTEGER DEFAULT NULL
+) RETURNS TABLE (
+  id UUID,
+  title TEXT,
+  description TEXT,
+  price INTEGER,
+  location TEXT,
+  address TEXT,
+  lat FLOAT8,
+  lng FLOAT8,
+  bedrooms INTEGER,
+  bathrooms INTEGER,
+  type TEXT,
+  sqm INTEGER,
+  peb TEXT,
+  floor INTEGER,
+  features TEXT[],
+  image_url TEXT,
+  distance_meters FLOAT8
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id, p.title, p.description, p.price, p.location, p.address, p.lat, p.lng,
+    p.bedrooms, p.bathrooms, p.type, p.sqm, p.peb, p.floor, p.features, p.image_url,
+    (6371000 * acos(
+      cos(radians(target_lat)) * cos(radians(p.lat)) * 
+      cos(radians(p.lng) - radians(target_lng)) + 
+      sin(radians(target_lat)) * sin(radians(p.lat))
+    )) AS dist
+  FROM properties p
+  WHERE 
+    (p_type IS NULL OR p.type = p_type) AND
+    (p_max_price IS NULL OR p.price <= p_max_price) AND
+    p.is_available = true
+    AND (6371000 * acos(
+      cos(radians(target_lat)) * cos(radians(p.lat)) * 
+      cos(radians(p.lng) - radians(target_lng)) + 
+      sin(radians(target_lat)) * sin(radians(p.lat))
+    )) BETWEEN min_dist AND max_dist
+  ORDER BY dist ASC;
+END;
+$$ LANGUAGE plpgsql;

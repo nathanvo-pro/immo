@@ -272,47 +272,32 @@ Tes règles :
             console.log("LANDMARK COORDS:", landmarkLat, landmarkLng);
             console.log("LANDMARK NAME:", landmarkDisplayName);
 
-            // Step 2: Fetch all available properties
-            let query = supabase
-              .from("properties")
-              .select("*")
-              .eq("is_available", true);
-
-            if (type) {
-              query = query.eq("type", type);
-            }
-            if (maxPrice !== undefined) {
-              query = query.lte("price", maxPrice);
-            }
-
-            const { data, error } = await query;
+            // Step 2 & 3: Scalable SQL Search (Search directly in DB)
+            const { data, error } = await supabase.rpc("search_properties_near", {
+              target_lat: landmarkLat,
+              target_lng: landmarkLng,
+              min_dist: minDistanceMeters,
+              max_dist: maxDistanceMeters,
+              p_type: type || null,
+              p_max_price: maxPrice || null,
+            });
 
             if (error) {
-              console.error("SUPABASE ERROR:", error);
+              console.error("SUPABASE RPC ERROR:", error);
               return {
                 properties: [] as Record<string, unknown>[],
                 count: 0,
                 landmark_found: true,
-                error: "Erreur lors de la recherche dans la base de données.",
+                error: "Erreur lors de la recherche spatiale. Vérifiez que la fonction SQL est installée.",
               };
             }
 
-            // Step 3: Calculate distances and filter
-            const propertiesWithDistance = (data || [])
-              .filter(p => p.lat && p.lng)
-              .map(p => ({
-                ...p,
-                distance_meters: haversineDistance(landmarkLat, landmarkLng, p.lat, p.lng),
-                distance_display: "",
-              }))
-              .filter(p => p.distance_meters >= minDistanceMeters && p.distance_meters <= maxDistanceMeters)
-              .sort((a, b) => a.distance_meters - b.distance_meters)
-              .map(p => ({
-                ...p,
-                distance_display: p.distance_meters < 1000
-                  ? `${p.distance_meters}m`
-                  : `${(p.distance_meters / 1000).toFixed(1)}km`,
-              }));
+            const propertiesWithDistance = (data || []).map((p: any) => ({
+              ...p,
+              distance_display: p.distance_meters < 1000
+                ? `${Math.round(p.distance_meters)}m`
+                : `${(p.distance_meters / 1000).toFixed(1)}km`,
+            }));
 
             console.log("PROPERTIES WITHIN RANGE:", propertiesWithDistance.length);
             console.log("===========================");
