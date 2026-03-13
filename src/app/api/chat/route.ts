@@ -192,6 +192,11 @@ Tes règles :
             .optional()
             .default(3000)
             .describe("Distance maximum en mètres autour du lieu (défaut: 3000m = 3km)"),
+          minDistanceMeters: z
+            .number()
+            .optional()
+            .default(0)
+            .describe("Distance minimum en mètres par rapport au lieu"),
           type: z
             .enum(["house", "apartment"])
             .optional()
@@ -201,7 +206,7 @@ Tes règles :
             .optional()
             .describe("Prix maximum en euros"),
         }),
-        execute: async ({ landmark, maxDistanceMeters = 3000, type, maxPrice }) => {
+        execute: async ({ landmark, maxDistanceMeters = 3000, minDistanceMeters = 0, type, maxPrice }) => {
           // --- SECURITY: Sanitize landmark input ---
           const sanitizedLandmark = landmark
             .replace(/[^a-zA-ZÀ-ÿ0-9\s\-'.,]/g, "")
@@ -223,10 +228,31 @@ Tes règles :
 
           // Step 1: Geocode the landmark
           try {
-            const geoResponse = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedLandmark + ", Bruxelles, Belgique")}&limit=1`
+            const fetchOptions = {
+              headers: {
+                "User-Agent": "ImmoBot-Bruxelles/1.0 (contact: nathanvo-pro@github.com)",
+              },
+            };
+
+            let q = sanitizedLandmark;
+            if (!q.toLowerCase().includes("bruxelles")) {
+              q += ", Bruxelles, Belgique";
+            }
+
+            let geoResponse = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+              fetchOptions
             );
-            const geoData = await geoResponse.json();
+            let geoData = await geoResponse.json();
+
+            // Fallback if the specific search fails
+            if (!geoData || geoData.length === 0) {
+              geoResponse = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedLandmark)}&limit=1`,
+                fetchOptions
+              );
+              geoData = await geoResponse.json();
+            }
 
             if (!geoData || geoData.length === 0) {
               console.log("LANDMARK NOT FOUND");
@@ -279,7 +305,7 @@ Tes règles :
                 distance_meters: haversineDistance(landmarkLat, landmarkLng, p.lat, p.lng),
                 distance_display: "",
               }))
-              .filter(p => p.distance_meters <= maxDistanceMeters)
+              .filter(p => p.distance_meters >= minDistanceMeters && p.distance_meters <= maxDistanceMeters)
               .sort((a, b) => a.distance_meters - b.distance_meters)
               .map(p => ({
                 ...p,
