@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages);
 
   // Get model from env or use default
-  const aiModel = process.env.AI_MODEL || "gpt-5.4-flash";
+  const aiModel = process.env.AI_MODEL || "gpt-5-mini";
 
   const result = streamText({
     model: openai(aiModel),
