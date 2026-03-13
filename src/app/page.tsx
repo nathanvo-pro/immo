@@ -48,9 +48,9 @@ export default function HomePage() {
         for (const part of message.parts) {
           const p = part as any;
 
-          // AI SDK v6 with toUIMessageStreamResponse: type is "tool-searchProperties"
+          // AI SDK v6: handle both searchProperties AND searchNearLandmark
           if (
-            p.type === "tool-searchProperties" &&
+            (p.type === "tool-searchProperties" || p.type === "tool-searchNearLandmark") &&
             p.state === "output-available" &&
             p.output
           ) {

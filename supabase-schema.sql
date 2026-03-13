@@ -1189,6 +1189,7 @@ INSERT INTO properties (title, description, price, location, address, lat, lng, 
 -- 5. Fonctions de recherche scalables (Spatial Search)
 -- Cette fonction permet de calculer les distances directement dans la base de données (PostgreSQL).
 -- C'est beaucoup plus performant que de tout ramener côté serveur Node.js.
+DROP FUNCTION IF EXISTS search_properties_near(FLOAT8, FLOAT8, FLOAT8, FLOAT8, TEXT, INTEGER);
 CREATE OR REPLACE FUNCTION search_properties_near(
   target_lat FLOAT8,
   target_lng FLOAT8,
