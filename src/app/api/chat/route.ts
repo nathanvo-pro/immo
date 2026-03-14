@@ -36,8 +36,8 @@ export async function POST(req: Request) {
   // Convert UIMessages from the client to ModelMessages for streamText
   const modelMessages = await convertToModelMessages(messages);
 
-  // Get model from env or use default (gpt-4o-mini is the default cheap+smart choice)
-  const aiModel = process.env.AI_MODEL || "gpt-4o-mini";
+  // Get model from env or use default (user specific: gpt-5-mini)
+  const aiModel = process.env.AI_MODEL || "gpt-5-mini";
 
   const result = streamText({
     model: openai(aiModel),

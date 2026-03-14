@@ -8,7 +8,7 @@ Une application web full-stack qui simule une agence immobilière à Bruxelles, 
 
 | Fonctionnalité | Description |
 |---|---|
-| 💬 **Chat IA** | Agent conversationnel (ImmoBot) propulsé par OpenAI GPT-4o-mini |
+| 💬 **Chat IA** | Agent conversationnel (ImmoBot) propulsé par OpenAI gpt-5-mini |
 | 🔍 **Recherche intelligente** | Filtre par commune, prix, type, surface, PEB, nombre de chambres |
 | 📍 **Recherche géographique** | "Trouvez-moi des biens à moins de 2km du Parc du Cinquantenaire" |
 | 🗺️ **Carte interactive** | Carte Leaflet avec marqueurs animés et popups avec photos |
@@ -36,7 +36,7 @@ Next.js 15 (App Router)
 ## 🛠️ Stack Technique
 
 - **Frontend** : Next.js 15, React 19, TypeScript, TailwindCSS
-- **IA** : Vercel AI SDK, OpenAI GPT-4o-mini
+- **IA** : Vercel AI SDK, OpenAI gpt-5-mini
 - **Base de données** : Supabase (PostgreSQL)
 - **Carte** : React Leaflet + OpenStreetMap + Nominatim
 - **Auth** : Supabase Auth (admin)
