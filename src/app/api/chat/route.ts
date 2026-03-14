@@ -7,20 +7,6 @@ import { headers } from "next/headers";
 
 export const maxDuration = 30;
 
-// Haversine distance calculation (returns meters)
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000; // Earth radius in meters
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c);
-}
-
 export async function POST(req: Request) {
   // --- SECURITY: Rate Limiting ---
   const headersList = await headers();
@@ -50,8 +36,8 @@ export async function POST(req: Request) {
   // Convert UIMessages from the client to ModelMessages for streamText
   const modelMessages = await convertToModelMessages(messages);
 
-  // Get model from env or use default
-  const aiModel = process.env.AI_MODEL || "gpt-5-mini";
+  // Get model from env or use default (gpt-4o-mini is the default cheap+smart choice)
+  const aiModel = process.env.AI_MODEL || "gpt-4o-mini";
 
   const result = streamText({
     model: openai(aiModel),
